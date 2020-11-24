@@ -1,0 +1,42 @@
+#Create Custom Container Image
+#Push to DockerHub Registry
+---
+- hosts: localhost
+  tasks: 
+  - name: Pull .war artifact from Artifactory
+    become: true
+    get_url:
+      url:  http://65.0.176.175:8082/artifactory/libs-release/org/springframework/samples/spring-petclinic/2.0-SNAPSHOT/spring-petclinic-2.0-20201123.113910-1.war
+      dest: /root
+      url_username: admin
+      url_password: aditya@28498
+
+  - name: Rename .war Artifact
+    command: mv spring-petclinic-2.0-20201123.113910-1.war petclinic.war
+  
+  - name: Pull Tomcat  Container Image
+    docker_image:
+      name: tomcat:8.0
+      source: pull
+
+  - name: Build image and with build args
+    docker_image:
+      name: petclinic
+      build:
+        path: /root
+        pull: no
+        args:
+          listen_port: 8080
+      source: build
+
+  - name: Log into DockerHub
+    docker_login:
+     username: adityaravi
+     password: aditya@28498
+    
+  - name: Push to docker hub
+    docker_image:
+      name: petclinic
+      repository: adityaravi/petclinic:1.0
+      push: yes
+      source: local
